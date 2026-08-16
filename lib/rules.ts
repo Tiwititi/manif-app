@@ -11,6 +11,7 @@ export type Answers = {
   insurance: boolean
 }
 
+export type ActionLink = { label: string; url: string }
 export type Result = {
   id: string
   level: 'obligatoire' | 'verifier' | 'recommande'
@@ -20,7 +21,10 @@ export type Result = {
   why: string
   contact?: string
   source?: string
+  actions?: ActionLink[]
 }
+
+const mairieSearch = (city: string) => `https://lannuaire.service-public.fr/navigation/mairie?where=${encodeURIComponent(city)}`
 
 export function evaluate(a: Answers): Result[] {
   const results: Result[] = []
@@ -29,26 +33,30 @@ export function evaluate(a: Answers): Result[] {
     id: 'public-space', level: 'obligatoire', icon: '📍', title: "Occupation de l’espace public",
     summary: "Une démarche auprès de la commune est à prévoir.",
     why: "Vous avez indiqué que la manifestation utilise un espace public.", contact: `Mairie de ${a.city || 'votre commune'}`,
-    source: 'https://www.service-public.fr/particuliers/vosdroits/F31613'
+    source: 'https://www.service-public.fr/particuliers/vosdroits/F31613',
+    actions: [{label:'Trouver les coordonnées de la mairie', url: mairieSearch(a.city)}]
   })
 
   if (a.roadImpact) results.push({
     id: 'traffic', level: 'verifier', icon: '🚧', title: 'Circulation / stationnement',
     summary: "Vérifiez les mesures et autorisations nécessaires avec la commune.",
-    why: "Votre événement modifie la circulation ou le stationnement.", contact: `Mairie de ${a.city || 'votre commune'}`
+    why: "Votre événement modifie la circulation ou le stationnement.", contact: `Mairie de ${a.city || 'votre commune'}`,
+    actions: [{label:'Contacter la mairie', url: mairieSearch(a.city)}]
   })
 
   if (a.alcohol) results.push({
     id: 'bar', level: 'obligatoire', icon: '🍺', title: 'Buvette temporaire',
     summary: "Demandez l’autorisation temporaire auprès du maire.",
     why: "Vous avez indiqué qu’une buvette servira de l’alcool.", contact: `Mairie de ${a.city || 'votre commune'}`,
-    source: 'https://www.service-public.fr/particuliers/vosdroits/F24345'
+    source: 'https://www.service-public.fr/associations/vosdroits/F24345',
+    actions: [{label:'Trouver les coordonnées de la mairie', url: mairieSearch(a.city)}]
   })
 
   if (a.music) results.push({
     id: 'music', level: 'obligatoire', icon: '🎵', title: 'Diffusion musicale',
     summary: "Vérifiez et effectuez les démarches liées à la diffusion publique de musique.",
-    why: "Vous avez indiqué de la musique ou un DJ.", source: 'https://www.service-public.fr/entreprendre/vosdroits/F3094'
+    why: "Vous avez indiqué de la musique ou un DJ.", source: 'https://entreprendre.service-public.fr/vosdroits/F3094',
+    actions: [{label:'Accéder à la SACEM', url:'https://clients.sacem.fr/'}]
   })
 
   if (a.food) results.push({
@@ -74,7 +82,8 @@ export function evaluate(a: Answers): Result[] {
   if (month >= 6 && month <= 9) results.push({
     id: 'heat', level: 'recommande', icon: '☀️', title: 'Fortes chaleurs',
     summary: "Préparez eau, zones d’ombre, surveillance météo et adaptations possibles.",
-    why: "Votre manifestation est prévue pendant la période estivale."
+    why: "Votre manifestation est prévue pendant la période estivale.",
+    actions: [{label:'Voir la vigilance Météo-France',url:'https://vigilance.meteofrance.fr/fr'}]
   })
 
   return results
